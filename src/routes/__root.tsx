@@ -31,8 +31,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Persona — 你的专属 AI 角色对话" },
-      { name: "description", content: "创建专属 AI 角色，与你想象中的人物自然对话。" },
+      { title: "难忘的TA — 你的专属 AI 角色对话" },
+      { name: "description", content: "创建专属 AI 角色，与你心中难忘的人自然对话。" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
