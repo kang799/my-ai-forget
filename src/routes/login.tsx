@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
-    meta: [{ title: "登录 — Persona" }, { name: "description", content: "登录或注册你的 Persona 账户。" }],
+    meta: [{ title: "登录 — 忘了么" }, { name: "description", content: "登录或注册你的“忘了么”账户。" }],
   }),
 });
 
@@ -27,21 +27,21 @@ function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <aside className="hidden lg:flex flex-col justify-between p-12 bg-foreground text-background">
-        <div className="flex items-center gap-2 font-semibold">
-          <span className="size-7 rounded-md bg-background text-foreground grid place-items-center">
-            <Sparkles className="size-4" />
+        <div className="flex items-center gap-2 font-semibold text-lg">
+          <span className="size-8 rounded-lg bg-background text-foreground grid place-items-center shadow-sm">
+            <Sparkles className="size-5" />
           </span>
-          Persona
+          忘了么
         </div>
         <div className="space-y-3 max-w-md">
-          <h1 className="text-4xl font-semibold tracking-tight leading-tight">
-            和你脑海里的那个人，<br />再聊一次。
+          <h1 className="text-4xl font-semibold tracking-tight leading-tight whitespace-pre-line">
+            和你脑海里的那个人，{"\n"}最后再聊一次。
           </h1>
-          <p className="text-sm opacity-70">
-            创建专属 AI 角色，定制语气、节奏、戒瘾模式。一切从一段简短的描述开始。
+          <p className="text-sm opacity-70 leading-relaxed">
+            深夜里你又一次翻遍了ta全网的动态，在和你无关的生活里找曾经的影子，明知道早就结束了，却还是不肯放过自己，你和朋友说没关系，但只有你自己知道自己真正忘了么，来「忘了么」吧。用我的AI，抛弃你陈旧的爱。
           </p>
         </div>
-        <p className="text-xs opacity-50">© Persona</p>
+        <p className="text-xs opacity-50">© kangshuhao</p>
       </aside>
 
       <section className="flex items-center justify-center p-6">

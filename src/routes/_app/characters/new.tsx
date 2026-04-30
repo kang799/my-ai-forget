@@ -15,5 +15,5 @@ export const Route = createFileRoute("/_app/characters/new")({
       }}
     />
   ),
-  head: () => ({ meta: [{ title: "新建角色 — Persona" }] }),
+  head: () => ({ meta: [{ title: "新建角色 — 忘了么" }] }),
 });

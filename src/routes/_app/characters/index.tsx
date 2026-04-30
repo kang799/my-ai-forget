@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/characters/")({
   component: CharactersList,
-  head: () => ({ meta: [{ title: "角色管理 — Persona" }] }),
+  head: () => ({ meta: [{ title: "角色管理 — 忘了么" }] }),
 });
 
 type Character = {
