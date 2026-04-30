@@ -157,7 +157,7 @@ export function CharacterForm({
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <div className="font-medium text-sm">戒瘾模式</div>
-              <div className="text-xs text-muted-foreground mt-0.5">开启后角色会使用更冷漠克制的语气。</div>
+              <div className="text-xs text-muted-foreground mt-0.5">开启后角色不会立刻变冷漠，而是随角色建立时长逐步疏远（约 3 天后开始，30 天达到完全克制）。</div>
             </div>
             <Switch checked={v.detox_mode} onCheckedChange={(x) => setV({ ...v, detox_mode: x })} />
           </div>
