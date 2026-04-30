@@ -31,8 +31,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "难忘的TA — 你的专属 AI 角色对话" },
-      { name: "description", content: "创建专属 AI 角色，与你心中难忘的人自然对话。" },
+      { title: "忘了么 — 你的专属 AI 角色对话" },
+      { name: "description", content: "深夜里你又一次翻遍了ta全网的动态，在和你无关的生活里找曾经的影子，明知道早就结束了，却还是不肯放过自己，你和朋友说没关系，但只有你自己知道自己真正忘了么，来「忘了么」吧。用我的AI，抛弃你陈旧ের爱。" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
