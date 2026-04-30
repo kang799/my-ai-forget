@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="size-7 rounded-md bg-foreground text-background grid place-items-center">
               <Heart className="size-4" />
             </span>
-            <span>难忘的TA</span>
+            <span>忘了么</span>
           </Link>
           <nav className="flex items-center gap-1">
             {nav.map((n) => {
