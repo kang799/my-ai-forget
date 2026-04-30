@@ -77,7 +77,15 @@ function EmailAuth() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("注册成功，请查看邮箱完成验证");
+        // 已开启自动确认邮箱：注册后立即登录
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) {
+          toast.success("注册成功，请登录");
+          setMode("signin");
+        } else {
+          toast.success("注册成功");
+          navigate({ to: "/characters" });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
