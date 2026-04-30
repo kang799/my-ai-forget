@@ -16,6 +16,7 @@ type Msg = { id?: string; role: "user" | "assistant"; content: string; created_a
 type Character = {
   id: string; name: string; gender: string | null; age_range: string | null;
   description: string | null; detox_mode: boolean; speed: string;
+  created_at: string;
 };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
