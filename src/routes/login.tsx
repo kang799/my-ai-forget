@@ -49,14 +49,10 @@ function LoginPage() {
           <h2 className="text-2xl font-semibold tracking-tight mb-1">欢迎回来</h2>
           <p className="text-sm text-muted-foreground mb-8">使用邮箱或手机号继续。</p>
 
-          <Tabs defaultValue="email">
-            <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="email">邮箱</TabsTrigger>
-              <TabsTrigger value="phone">手机号</TabsTrigger>
-            </TabsList>
-            <TabsContent value="email"><EmailAuth /></TabsContent>
-            <TabsContent value="phone"><PhoneAuth /></TabsContent>
-          </Tabs>
+          <EmailAuth />
+          <p className="mt-6 text-xs text-muted-foreground">
+            手机号登录需要后台配置 SMS 服务商，暂未启用。
+          </p>
         </div>
       </section>
     </div>
