@@ -12,6 +12,16 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
+    // 戒瘾期满（6 个月）：直接停止回复
+    if (character?.detox_mode && character?.created_at) {
+      const days = (Date.now() - new Date(character.created_at).getTime()) / 86400000;
+      if (days >= 180) {
+        return new Response(JSON.stringify({ stopped: true, content: "" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const sys = buildSystemPrompt(character);
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
