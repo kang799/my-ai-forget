@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
-import { Users, MessageSquare, LogOut, Sparkles } from "lucide-react";
+import { Users, MessageSquare, LogOut, Heart, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -12,6 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const nav = [
     { to: "/characters", label: "角色", icon: Users },
     { to: "/chat", label: "对话", icon: MessageSquare },
+    { to: "/community", label: "社群", icon: Globe2 },
   ];
 
   return (
@@ -20,9 +21,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="max-w-6xl mx-auto h-14 px-4 flex items-center gap-6">
           <Link to="/characters" className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="size-7 rounded-md bg-foreground text-background grid place-items-center">
-              <Sparkles className="size-4" />
+              <Heart className="size-4" />
             </span>
-            <span>Persona</span>
+            <span>难忘的TA</span>
           </Link>
           <nav className="flex items-center gap-1">
             {nav.map((n) => {

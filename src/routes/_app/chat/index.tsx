@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_app/chat/")({
   head: () => ({ meta: [{ title: "对话 — Persona" }] }),
 });
 
-type Char = { id: string; name: string; description: string | null };
+type Char = { id: string; name: string; description: string | null; partner_avatar_url: string | null };
 
 function ChatIndex() {
   const [list, setList] = useState<Char[]>([]);
@@ -18,7 +18,10 @@ function ChatIndex() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("characters").select("id,name,description").order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("characters")
+        .select("id,name,description,partner_avatar_url")
+        .order("created_at", { ascending: false });
       const rows = (data as Char[]) ?? [];
       setList(rows);
       if (rows.length === 1) navigate({ to: "/chat/$id", params: { id: rows[0].id } });
@@ -41,8 +44,12 @@ function ChatIndex() {
             <Link key={c.id} to="/chat/$id" params={{ id: c.id }}>
               <Card className="p-4 hover:shadow-md hover:border-foreground/20 transition-all cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-foreground text-background grid place-items-center font-medium">
-                    {c.name.slice(0,1)}
+                  <div className="size-10 rounded-full overflow-hidden bg-foreground text-background grid place-items-center font-medium">
+                    {c.partner_avatar_url ? (
+                      <img src={c.partner_avatar_url} alt={c.name} className="size-full object-cover" />
+                    ) : (
+                      <span>{c.name.slice(0,1)}</span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{c.name}</div>

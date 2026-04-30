@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppCommunityRouteImport } from './routes/_app/community'
 import { Route as AppChatIndexRouteImport } from './routes/_app/chat/index'
 import { Route as AppCharactersIndexRouteImport } from './routes/_app/characters/index'
 import { Route as AppChatIdRouteImport } from './routes/_app/chat/$id'
@@ -31,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppCommunityRoute = AppCommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppChatIndexRoute = AppChatIndexRouteImport.update({
   id: '/chat/',
@@ -61,6 +67,7 @@ const AppCharactersIdEditRoute = AppCharactersIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/community': typeof AppCommunityRoute
   '/characters/new': typeof AppCharactersNewRoute
   '/chat/$id': typeof AppChatIdRoute
   '/characters/': typeof AppCharactersIndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/community': typeof AppCommunityRoute
   '/characters/new': typeof AppCharactersNewRoute
   '/chat/$id': typeof AppChatIdRoute
   '/characters': typeof AppCharactersIndexRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/community': typeof AppCommunityRoute
   '/_app/characters/new': typeof AppCharactersNewRoute
   '/_app/chat/$id': typeof AppChatIdRoute
   '/_app/characters/': typeof AppCharactersIndexRoute
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/community'
     | '/characters/new'
     | '/chat/$id'
     | '/characters/'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/community'
     | '/characters/new'
     | '/chat/$id'
     | '/characters'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/community'
     | '/_app/characters/new'
     | '/_app/chat/$id'
     | '/_app/characters/'
@@ -146,6 +158,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/community': {
+      id: '/_app/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof AppCommunityRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/chat/': {
       id: '/_app/chat/'
@@ -186,6 +205,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppCommunityRoute: typeof AppCommunityRoute
   AppCharactersNewRoute: typeof AppCharactersNewRoute
   AppChatIdRoute: typeof AppChatIdRoute
   AppCharactersIndexRoute: typeof AppCharactersIndexRoute
@@ -194,6 +214,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCommunityRoute: AppCommunityRoute,
   AppCharactersNewRoute: AppCharactersNewRoute,
   AppChatIdRoute: AppChatIdRoute,
   AppCharactersIndexRoute: AppCharactersIndexRoute,

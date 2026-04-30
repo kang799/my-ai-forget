@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Upload } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export type CharacterFormValues = {
@@ -20,6 +20,10 @@ export type CharacterFormValues = {
   description: string;
   detox_mode: boolean;
   speed: string;
+  avatar_url?: string | null;
+  partner_avatar_url?: string | null;
+  self_nudge_text?: string;
+  partner_nudge_text?: string;
 };
 
 export function CharacterForm({
@@ -30,10 +34,16 @@ export function CharacterForm({
   mode: "create" | "edit";
 }) {
   const navigate = useNavigate();
-  const [v, setV] = useState<CharacterFormValues>(initial);
+  const [v, setV] = useState<CharacterFormValues>({
+    self_nudge_text: "拍了拍 对方",
+    partner_nudge_text: "拍了拍 我",
+    ...initial,
+  });
   const [voice, setVoice] = useState<File | null>(null);
   const [chatlog, setChatlog] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadingSelf, setUploadingSelf] = useState(false);
+  const [uploadingPartner, setUploadingPartner] = useState(false);
 
   async function uploadIfAny(file: File | null, userId: string) {
     if (!file) return null;
@@ -41,6 +51,27 @@ export function CharacterForm({
     const { error } = await supabase.storage.from("uploads").upload(path, file);
     if (error) throw error;
     return path;
+  }
+
+  async function uploadAvatar(file: File, kind: "self" | "partner") {
+    const setLoading = kind === "self" ? setUploadingSelf : setUploadingPartner;
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("请先登录");
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${kind}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      if (kind === "self") setV((s) => ({ ...s, avatar_url: data.publicUrl }));
+      else setV((s) => ({ ...s, partner_avatar_url: data.publicUrl }));
+      toast.success("头像已上传");
+    } catch (e: any) {
+      toast.error(e.message ?? "上传失败");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function submit(e: FormEvent) {
@@ -51,14 +82,13 @@ export function CharacterForm({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("请先登录");
 
-      // Optional file uploads (best-effort; bucket may not exist yet)
       let voice_url: string | null = null;
       let chatlog_url: string | null = null;
       try {
         voice_url = await uploadIfAny(voice, user.id);
         chatlog_url = await uploadIfAny(chatlog, user.id);
       } catch {
-        // Storage bucket may be optional
+        // optional
       }
 
       const payload = {
@@ -69,6 +99,10 @@ export function CharacterForm({
         description: v.description || null,
         detox_mode: v.detox_mode,
         speed: v.speed,
+        avatar_url: v.avatar_url || null,
+        partner_avatar_url: v.partner_avatar_url || null,
+        self_nudge_text: v.self_nudge_text?.trim() || "拍了拍 对方",
+        partner_nudge_text: v.partner_nudge_text?.trim() || "拍了拍 我",
         ...(voice_url ? { voice_url } : {}),
         ...(chatlog_url ? { chatlog_url } : {}),
       };
@@ -143,6 +177,48 @@ export function CharacterForm({
             />
           </div>
 
+          {/* 头像 */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <AvatarPicker
+              label="我的头像"
+              url={v.avatar_url}
+              uploading={uploadingSelf}
+              onPick={(f) => uploadAvatar(f, "self")}
+              onClear={() => setV({ ...v, avatar_url: null })}
+              fallback="我"
+            />
+            <AvatarPicker
+              label="对方头像"
+              url={v.partner_avatar_url}
+              uploading={uploadingPartner}
+              onPick={(f) => uploadAvatar(f, "partner")}
+              onClear={() => setV({ ...v, partner_avatar_url: null })}
+              fallback={v.name.slice(0, 1) || "T"}
+            />
+          </div>
+
+          {/* 拍一拍提示词 */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label>我"拍一拍"对方的提示词</Label>
+              <Input
+                value={v.self_nudge_text ?? ""}
+                onChange={(e) => setV({ ...v, self_nudge_text: e.target.value })}
+                placeholder="拍了拍 对方"
+              />
+              <p className="text-xs text-muted-foreground mt-1">在聊天界面双击对方头像触发。</p>
+            </div>
+            <div>
+              <Label>对方"拍一拍"我的提示词</Label>
+              <Input
+                value={v.partner_nudge_text ?? ""}
+                onChange={(e) => setV({ ...v, partner_nudge_text: e.target.value })}
+                placeholder="拍了拍 我"
+              />
+              <p className="text-xs text-muted-foreground mt-1">在聊天界面双击我的头像触发。</p>
+            </div>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>上传录音（可选）</Label>
@@ -156,8 +232,10 @@ export function CharacterForm({
 
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-              <div className="font-medium text-sm">戒瘾模式</div>
-              <div className="text-xs text-muted-foreground mt-0.5">开启后角色不会立刻变冷漠，而是随角色建立时长逐步疏远（约 3 天后开始，30 天达到完全克制）。</div>
+              <div className="font-medium text-sm">戒瘾模式（6 个月）</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                开启后角色不会立刻变冷漠，而是在 6 个月内逐步疏远；满 6 个月后将彻底停止回复，帮助你真正放下。
+              </div>
             </div>
             <Switch checked={v.detox_mode} onCheckedChange={(x) => setV({ ...v, detox_mode: x })} />
           </div>
@@ -185,6 +263,53 @@ export function CharacterForm({
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function AvatarPicker({
+  label, url, uploading, onPick, onClear, fallback,
+}: {
+  label: string;
+  url?: string | null;
+  uploading: boolean;
+  onPick: (f: File) => void;
+  onClear: () => void;
+  fallback: string;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="flex items-center gap-3 mt-1">
+        <div className="size-14 rounded-md overflow-hidden bg-secondary grid place-items-center text-sm font-medium shrink-0 border">
+          {url ? (
+            <img src={url} alt={label} className="size-full object-cover" />
+          ) : (
+            <span className="text-muted-foreground">{fallback}</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer rounded-md border px-2.5 py-1.5 hover:bg-secondary transition-colors">
+            {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+            {url ? "更换" : "上传"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onPick(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {url && (
+            <button type="button" className="text-xs text-muted-foreground hover:text-destructive text-left" onClick={onClear}>
+              移除
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

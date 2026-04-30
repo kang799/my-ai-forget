@@ -31,6 +31,10 @@ function EditCharacter() {
         description: row.description ?? "",
         detox_mode: row.detox_mode,
         speed: row.speed,
+        avatar_url: (row as any).avatar_url ?? null,
+        partner_avatar_url: (row as any).partner_avatar_url ?? null,
+        self_nudge_text: (row as any).self_nudge_text ?? "拍了拍 对方",
+        partner_nudge_text: (row as any).partner_nudge_text ?? "拍了拍 我",
       });
     })();
   }, [id, navigate]);
