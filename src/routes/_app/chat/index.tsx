@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_app/chat/")({
   head: () => ({ meta: [{ title: "对话 — Persona" }] }),
 });
 
-type Char = { id: string; name: string; description: string | null };
+type Char = { id: string; name: string; description: string | null; partner_avatar_url: string | null };
 
 function ChatIndex() {
   const [list, setList] = useState<Char[]>([]);
@@ -18,7 +18,10 @@ function ChatIndex() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("characters").select("id,name,description").order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("characters")
+        .select("id,name,description,partner_avatar_url")
+        .order("created_at", { ascending: false });
       const rows = (data as Char[]) ?? [];
       setList(rows);
       if (rows.length === 1) navigate({ to: "/chat/$id", params: { id: rows[0].id } });
