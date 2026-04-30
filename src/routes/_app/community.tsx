@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, MessageCircle, Trash2 } from "lucide-react";
+import { Loader2, Send, MessageCircle, Trash2, Heart, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/community")({
@@ -30,9 +30,13 @@ type Comment = {
   created_at: string;
 };
 
+const TEAM_PHONE = "+86 17513276307";
+
 function CommunityPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [commentsByPost, setCommentsByPost] = useState<Record<string, Comment[]>>({});
+  const [likesByPost, setLikesByPost] = useState<Record<string, number>>({});
+  const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({});
   const [me, setMe] = useState<{ id: string; name: string } | null>(null);
   const [content, setContent] = useState("");
   const [name, setName] = useState("");
@@ -48,34 +52,51 @@ function CommunityPage() {
         setMe({ id: user.id, name: display });
         setName(display);
       }
-      await load();
+      await load(user?.id);
       setLoading(false);
     })();
   }, []);
 
-  async function load() {
+  async function load(myId?: string) {
+    const uid = myId ?? me?.id;
     const { data: ps } = await supabase
       .from("community_posts")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(200);
     const list = (ps as Post[]) ?? [];
-    setPosts(list);
+
+    let commentsMap: Record<string, Comment[]> = {};
+    let likeCount: Record<string, number> = {};
+    let likedMine: Record<string, boolean> = {};
+
     if (list.length) {
       const ids = list.map((p) => p.id);
-      const { data: cs } = await supabase
-        .from("community_comments")
-        .select("*")
-        .in("post_id", ids)
-        .order("created_at", { ascending: true });
-      const map: Record<string, Comment[]> = {};
-      (cs as Comment[] | null)?.forEach((c) => {
-        (map[c.post_id] ||= []).push(c);
+      const [{ data: cs }, { data: ls }] = await Promise.all([
+        supabase.from("community_comments").select("*").in("post_id", ids).order("created_at", { ascending: true }),
+        supabase.from("community_likes").select("post_id,user_id").in("post_id", ids),
+      ]);
+      (cs as Comment[] | null)?.forEach((c) => { (commentsMap[c.post_id] ||= []).push(c); });
+      (ls as { post_id: string; user_id: string }[] | null)?.forEach((l) => {
+        likeCount[l.post_id] = (likeCount[l.post_id] || 0) + 1;
+        if (uid && l.user_id === uid) likedMine[l.post_id] = true;
       });
-      setCommentsByPost(map);
-    } else {
-      setCommentsByPost({});
     }
+
+    // 排序：rank = 点赞数 + 评论数 - 发布天数
+    const now = Date.now();
+    const sorted = [...list].sort((a, b) => {
+      const sa = (likeCount[a.id] || 0) + (commentsMap[a.id]?.length || 0)
+        - (now - new Date(a.created_at).getTime()) / 86400000;
+      const sb = (likeCount[b.id] || 0) + (commentsMap[b.id]?.length || 0)
+        - (now - new Date(b.created_at).getTime()) / 86400000;
+      return sb - sa;
+    });
+
+    setPosts(sorted);
+    setCommentsByPost(commentsMap);
+    setLikesByPost(likeCount);
+    setLikedByMe(likedMine);
   }
 
   async function publish(e: FormEvent) {
@@ -107,6 +128,23 @@ function CommunityPage() {
     load();
   }
 
+  async function toggleLike(postId: string) {
+    if (!me) return;
+    const liked = likedByMe[postId];
+    // 乐观更新
+    setLikedByMe((s) => ({ ...s, [postId]: !liked }));
+    setLikesByPost((s) => ({ ...s, [postId]: (s[postId] || 0) + (liked ? -1 : 1) }));
+    if (liked) {
+      const { error } = await supabase.from("community_likes")
+        .delete().eq("post_id", postId).eq("user_id", me.id);
+      if (error) { toast.error(error.message); load(); }
+    } else {
+      const { error } = await supabase.from("community_likes")
+        .insert({ post_id: postId, user_id: me.id });
+      if (error) { toast.error(error.message); load(); }
+    }
+  }
+
   async function delPost(id: string) {
     if (!confirm("确认删除这条帖子？")) return;
     const { error } = await supabase.from("community_posts").delete().eq("id", id);
@@ -118,9 +156,20 @@ function CommunityPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight mb-1">用户社群</h1>
-      <p className="text-sm text-muted-foreground mb-6">
+      <p className="text-sm text-muted-foreground mb-3">
         在这里分享你与"难忘的TA"的故事、戒瘾历程、或者只是今天的心情。
       </p>
+
+      {/* 制作团队联系方式 */}
+      <Card className="p-3 mb-6 bg-muted/40 border-dashed">
+        <div className="flex items-center gap-2 text-sm">
+          <Phone className="size-4 text-muted-foreground" />
+          <span className="text-muted-foreground">制作团队联系方式：</span>
+          <a href={`tel:${TEAM_PHONE.replace(/\s/g, "")}`} className="font-medium hover:underline">
+            {TEAM_PHONE}
+          </a>
+        </div>
+      </Card>
 
       {/* 发帖 */}
       <Card className="p-4 mb-6">
@@ -165,7 +214,10 @@ function CommunityPage() {
               key={p.id}
               post={p}
               comments={commentsByPost[p.id] ?? []}
+              likes={likesByPost[p.id] ?? 0}
+              liked={!!likedByMe[p.id]}
               isOwner={me?.id === p.user_id}
+              onLike={() => toggleLike(p.id)}
               onComment={(t) => addComment(p.id, t)}
               onDelete={() => delPost(p.id)}
             />
@@ -177,11 +229,14 @@ function CommunityPage() {
 }
 
 function PostCard({
-  post, comments, isOwner, onComment, onDelete,
+  post, comments, likes, liked, isOwner, onLike, onComment, onDelete,
 }: {
   post: Post;
   comments: Comment[];
+  likes: number;
+  liked: boolean;
   isOwner: boolean;
+  onLike: () => void;
   onComment: (t: string) => void;
   onDelete: () => void;
 }) {
@@ -202,7 +257,14 @@ function PostCard({
             </span>
           </div>
           <p className="mt-1 text-[14.5px] whitespace-pre-wrap leading-relaxed">{post.content}</p>
-          <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+            <button
+              onClick={onLike}
+              className={`inline-flex items-center gap-1 transition-colors ${liked ? "text-red-500" : "hover:text-foreground"}`}
+            >
+              <Heart className={`size-3.5 ${liked ? "fill-current" : ""}`} />
+              {likes || ""}
+            </button>
             <button onClick={() => setOpen((o) => !o)} className="inline-flex items-center gap-1 hover:text-foreground">
               <MessageCircle className="size-3.5" />评论 {comments.length || ""}
             </button>
