@@ -1,0 +1,70 @@
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { type ReactNode } from "react";
+import { useAuth } from "@/lib/auth";
+import { Users, MessageSquare, LogOut, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const { user, signOut } = useAuth();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+
+  const nav = [
+    { to: "/characters", label: "角色", icon: Users },
+    { to: "/chat", label: "对话", icon: MessageSquare },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-30 glass border-b">
+        <div className="max-w-6xl mx-auto h-14 px-4 flex items-center gap-6">
+          <Link to="/characters" className="flex items-center gap-2 font-semibold tracking-tight">
+            <span className="size-7 rounded-md bg-foreground text-background grid place-items-center">
+              <Sparkles className="size-4" />
+            </span>
+            <span>Persona</span>
+          </Link>
+          <nav className="flex items-center gap-1">
+            {nav.map((n) => {
+              const active = path.startsWith(n.to);
+              return (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  className={
+                    "px-3 py-1.5 rounded-md text-sm transition-colors " +
+                    (active
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <n.icon className="size-4" />
+                    {n.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              {user?.email ?? user?.phone}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                await signOut();
+                navigate({ to: "/login" });
+              }}
+            >
+              <LogOut className="size-4" />
+              退出
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
