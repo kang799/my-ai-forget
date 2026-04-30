@@ -98,7 +98,7 @@ function ChatPage() {
           Authorization: `Bearer ${session?.access_token ?? ""}`,
         },
         body: JSON.stringify({
-          character,
+          character_id: id,
           messages: [...messages, userMsg]
             .filter((m) => m.role !== "system")
             .map((m) => ({ role: m.role, content: m.content })),
