@@ -14,7 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      characters: {
+        Row: {
+          age_range: string | null
+          chatlog_url: string | null
+          created_at: string
+          description: string | null
+          detox_mode: boolean
+          gender: string | null
+          id: string
+          name: string
+          speed: string
+          updated_at: string
+          user_id: string
+          voice_url: string | null
+        }
+        Insert: {
+          age_range?: string | null
+          chatlog_url?: string | null
+          created_at?: string
+          description?: string | null
+          detox_mode?: boolean
+          gender?: string | null
+          id?: string
+          name: string
+          speed?: string
+          updated_at?: string
+          user_id: string
+          voice_url?: string | null
+        }
+        Update: {
+          age_range?: string | null
+          chatlog_url?: string | null
+          created_at?: string
+          description?: string | null
+          detox_mode?: boolean
+          gender?: string | null
+          id?: string
+          name?: string
+          speed?: string
+          updated_at?: string
+          user_id?: string
+          voice_url?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          character_id: string
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          character_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
