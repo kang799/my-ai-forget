@@ -17,6 +17,7 @@ export type Database = {
       characters: {
         Row: {
           age_range: string | null
+          avatar_url: string | null
           chatlog_url: string | null
           created_at: string
           description: string | null
@@ -24,6 +25,9 @@ export type Database = {
           gender: string | null
           id: string
           name: string
+          partner_avatar_url: string | null
+          partner_nudge_text: string
+          self_nudge_text: string
           speed: string
           updated_at: string
           user_id: string
@@ -31,6 +35,7 @@ export type Database = {
         }
         Insert: {
           age_range?: string | null
+          avatar_url?: string | null
           chatlog_url?: string | null
           created_at?: string
           description?: string | null
@@ -38,6 +43,9 @@ export type Database = {
           gender?: string | null
           id?: string
           name: string
+          partner_avatar_url?: string | null
+          partner_nudge_text?: string
+          self_nudge_text?: string
           speed?: string
           updated_at?: string
           user_id: string
@@ -45,6 +53,7 @@ export type Database = {
         }
         Update: {
           age_range?: string | null
+          avatar_url?: string | null
           chatlog_url?: string | null
           created_at?: string
           description?: string | null
@@ -52,10 +61,75 @@ export type Database = {
           gender?: string | null
           id?: string
           name?: string
+          partner_avatar_url?: string | null
+          partner_nudge_text?: string
+          self_nudge_text?: string
           speed?: string
           updated_at?: string
           user_id?: string
           voice_url?: string | null
+        }
+        Relationships: []
+      }
+      community_comments: {
+        Row: {
+          author_name: string | null
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_name: string | null
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
