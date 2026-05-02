@@ -174,13 +174,54 @@ export function CharacterForm({
             </div>
           </div>
           <div>
-            <Label>人物描述</Label>
+            <div className="flex items-center justify-between">
+              <Label>人物描述</Label>
+              <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                <Sparkles className="size-3 text-brand" />越具体，越像 TA
+              </span>
+            </div>
             <Textarea
-              rows={4}
+              rows={6}
               value={v.description}
               onChange={(e) => setV({ ...v, description: e.target.value })}
-              placeholder="性格、说话风格、背景故事…"
+              placeholder={`比如：\n• 28 岁，做设计，喜欢猫和深夜便利店\n• 说话简短，常用"嗯""哦"，很少用感叹号\n• 在意细节，会记得我随口提的事\n• 难过时不会直说，会忽然安静或转移话题`}
             />
+            <Accordion type="single" collapsible className="mt-2">
+              <AccordionItem value="tips" className="border rounded-lg bg-accent/30 px-3">
+                <AccordionTrigger className="text-sm py-2.5 hover:no-underline">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-brand" />
+                    不知道怎么写？看看「人物小传 20 问」
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground space-y-3 pb-4">
+                  <p>把下面的问题在脑海里逐个回答一遍，再把关键的几条写进描述里。越细节越好，AI 越能复刻 TA 的灵魂。</p>
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-foreground/80">
+                    <div>1. TA 的全名和你怎么称呼 TA</div>
+                    <div>2. 年龄、星座、职业</div>
+                    <div>3. 外貌最让你记得的一个细节</div>
+                    <div>4. 说话语速快还是慢</div>
+                    <div>5. 常用的口头禅、语气词</div>
+                    <div>6. 用不用表情包?用什么风格的</div>
+                    <div>7. 打字会不会全小写/不加标点</div>
+                    <div>8. 高兴时怎么表达</div>
+                    <div>9. 难过时是直说还是回避</div>
+                    <div>10. 生气时是冷战还是争吵</div>
+                    <div>11. 最在意的事 / 最敏感的话题</div>
+                    <div>12. 喜欢的食物、电影、音乐</div>
+                    <div>13. 一天里几点最活跃</div>
+                    <div>14. 对你最常说的一句话</div>
+                    <div>15. 你们怎么认识的</div>
+                    <div>16. 共同的回忆里最深的一幕</div>
+                    <div>17. TA 的家庭 / 成长背景</div>
+                    <div>18. 价值观:在乎钱、自由、还是关系</div>
+                    <div>19. 你们之间没说出口的事</div>
+                    <div>20. 如果只剩最后一次聊天,你想问 TA 什么</div>
+                  </div>
+                  <p className="pt-1 border-t">📖 进阶技巧:可以参考<a className="text-brand underline underline-offset-2" href="https://zh.wikipedia.org/wiki/%E4%BA%BA%E7%89%A9%E5%B0%8F%E4%BC%A0" target="_blank" rel="noreferrer">人物小传</a>、《故事》(Robert McKee) 里的"角色三层结构"——外在特征 / 内在性格 / 潜意识欲望。</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           {/* 头像 */}
