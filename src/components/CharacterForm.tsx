@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Upload } from "lucide-react";
+import { Loader2, ArrowLeft, Upload, ExternalLink, Sparkles, Heart } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 export type CharacterFormValues = {
@@ -129,10 +130,15 @@ export function CharacterForm({
       <Button asChild variant="ghost" size="sm" className="mb-4">
         <Link to="/characters"><ArrowLeft className="size-4" />返回</Link>
       </Button>
-      <h1 className="text-2xl font-semibold tracking-tight mb-1">
-        {mode === "create" ? "新建角色" : "编辑角色"}
-      </h1>
-      <p className="text-sm text-muted-foreground mb-8">为这个 AI 角色设定身份与对话风格。</p>
+      <div className="flex items-center gap-2 mb-1">
+        <Heart className="size-5 text-brand" fill="currentColor" />
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {mode === "create" ? "新建一个 TA" : "编辑这个 TA"}
+        </h1>
+      </div>
+      <p className="text-sm text-muted-foreground mb-8">
+        慢慢来，把记忆里的 TA 一点点描出来。越细致，重逢越像。
+      </p>
 
       <form onSubmit={submit}>
         <Card className="p-6 space-y-5">
@@ -168,13 +174,54 @@ export function CharacterForm({
             </div>
           </div>
           <div>
-            <Label>人物描述</Label>
+            <div className="flex items-center justify-between">
+              <Label>人物描述</Label>
+              <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                <Sparkles className="size-3 text-brand" />越具体，越像 TA
+              </span>
+            </div>
             <Textarea
-              rows={4}
+              rows={6}
               value={v.description}
               onChange={(e) => setV({ ...v, description: e.target.value })}
-              placeholder="性格、说话风格、背景故事…"
+              placeholder={`比如：\n• 28 岁，做设计，喜欢猫和深夜便利店\n• 说话简短，常用"嗯""哦"，很少用感叹号\n• 在意细节，会记得我随口提的事\n• 难过时不会直说，会忽然安静或转移话题`}
             />
+            <Accordion type="single" collapsible className="mt-2">
+              <AccordionItem value="tips" className="border rounded-lg bg-accent/30 px-3">
+                <AccordionTrigger className="text-sm py-2.5 hover:no-underline">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-brand" />
+                    不知道怎么写？看看「人物小传 20 问」
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground space-y-3 pb-4">
+                  <p>把下面的问题在脑海里逐个回答一遍，再把关键的几条写进描述里。越细节越好，AI 越能复刻 TA 的灵魂。</p>
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-foreground/80">
+                    <div>1. TA 的全名和你怎么称呼 TA</div>
+                    <div>2. 年龄、星座、职业</div>
+                    <div>3. 外貌最让你记得的一个细节</div>
+                    <div>4. 说话语速快还是慢</div>
+                    <div>5. 常用的口头禅、语气词</div>
+                    <div>6. 用不用表情包?用什么风格的</div>
+                    <div>7. 打字会不会全小写/不加标点</div>
+                    <div>8. 高兴时怎么表达</div>
+                    <div>9. 难过时是直说还是回避</div>
+                    <div>10. 生气时是冷战还是争吵</div>
+                    <div>11. 最在意的事 / 最敏感的话题</div>
+                    <div>12. 喜欢的食物、电影、音乐</div>
+                    <div>13. 一天里几点最活跃</div>
+                    <div>14. 对你最常说的一句话</div>
+                    <div>15. 你们怎么认识的</div>
+                    <div>16. 共同的回忆里最深的一幕</div>
+                    <div>17. TA 的家庭 / 成长背景</div>
+                    <div>18. 价值观:在乎钱、自由、还是关系</div>
+                    <div>19. 你们之间没说出口的事</div>
+                    <div>20. 如果只剩最后一次聊天,你想问 TA 什么</div>
+                  </div>
+                  <p className="pt-1 border-t">📖 进阶技巧:可以参考<a className="text-brand underline underline-offset-2" href="https://zh.wikipedia.org/wiki/%E4%BA%BA%E7%89%A9%E5%B0%8F%E4%BC%A0" target="_blank" rel="noreferrer">人物小传</a>、《故事》(Robert McKee) 里的"角色三层结构"——外在特征 / 内在性格 / 潜意识欲望。</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           {/* 头像 */}
@@ -220,13 +267,50 @@ export function CharacterForm({
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <Label>上传录音（可选）</Label>
-              <Input type="file" accept="audio/*" onChange={(e) => setVoice(e.target.files?.[0] ?? null)} />
+            <div className="space-y-1.5">
+              <Label>上传 TA 的录音（可选）</Label>
+              <Input
+                type="file"
+                accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,audio/ogg,audio/webm,.mp3,.m4a,.wav,.aac,.ogg,.webm"
+                onChange={(e) => setVoice(e.target.files?.[0] ?? null)}
+              />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                支持 <span className="font-medium text-foreground/80">.mp3 / .m4a / .wav / .aac / .ogg / .webm</span>，单文件 ≤ 20MB。
+                哪怕只是一段几秒的语音、一段视频里的笑声，都能帮 AI 更贴近 TA 的语气。
+              </p>
             </div>
-            <div>
-              <Label>上传聊天记录（可选）</Label>
-              <Input type="file" accept=".txt,.json,.csv" onChange={(e) => setChatlog(e.target.files?.[0] ?? null)} />
+            <div className="space-y-1.5">
+              <Label>上传你们的聊天记录（可选）</Label>
+              <Input
+                type="file"
+                accept=".txt,.json,.csv,.html,.md"
+                onChange={(e) => setChatlog(e.target.files?.[0] ?? null)}
+              />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                支持 <span className="font-medium text-foreground/80">.txt / .json / .csv / .html / .md</span>。
+                聊天记录越多，TA 的"灵魂"就越清晰。
+              </p>
+              <div className="rounded-lg bg-accent/40 border border-border/60 p-2.5 text-xs space-y-1.5 mt-1.5">
+                <div className="font-medium text-foreground/90">📱 不知道怎么导出微信聊天记录?</div>
+                <div className="text-muted-foreground">推荐这些工具,几步就能把记录导成文本:</div>
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  <a href="https://github.com/LC044/WeChatMsg" target="_blank" rel="noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card border hover:border-brand hover:text-brand transition-colors">
+                    留痕 (Windows) <ExternalLink className="size-3" />
+                  </a>
+                  <a href="https://github.com/git-jiadong/wechatDataBackup" target="_blank" rel="noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card border hover:border-brand hover:text-brand transition-colors">
+                    WechatDataBackup <ExternalLink className="size-3" />
+                  </a>
+                  <a href="https://github.com/BlueMatthew/WechatExporter" target="_blank" rel="noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card border hover:border-brand hover:text-brand transition-colors">
+                    WechatExporter (Mac) <ExternalLink className="size-3" />
+                  </a>
+                </div>
+                <div className="text-muted-foreground/80 pt-1">
+                  导出后选择 <span className="text-foreground/80">TXT / HTML</span> 格式上传即可。所有数据仅用于训练这个角色,不会外泄。
+                </div>
+              </div>
             </div>
           </div>
 
@@ -308,6 +392,7 @@ function AvatarPicker({
               移除
             </button>
           )}
+          <p className="text-[11px] text-muted-foreground/80 leading-tight">支持 .jpg / .png / .webp,≤ 5MB</p>
         </div>
       </div>
     </div>
