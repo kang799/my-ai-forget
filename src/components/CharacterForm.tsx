@@ -392,6 +392,7 @@ function AvatarPicker({
               移除
             </button>
           )}
+          <p className="text-[11px] text-muted-foreground/80 leading-tight">支持 .jpg / .png / .webp,≤ 5MB</p>
         </div>
       </div>
     </div>
