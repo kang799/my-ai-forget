@@ -130,10 +130,15 @@ export function CharacterForm({
       <Button asChild variant="ghost" size="sm" className="mb-4">
         <Link to="/characters"><ArrowLeft className="size-4" />返回</Link>
       </Button>
-      <h1 className="text-2xl font-semibold tracking-tight mb-1">
-        {mode === "create" ? "新建角色" : "编辑角色"}
-      </h1>
-      <p className="text-sm text-muted-foreground mb-8">为这个 AI 角色设定身份与对话风格。</p>
+      <div className="flex items-center gap-2 mb-1">
+        <Heart className="size-5 text-brand" fill="currentColor" />
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {mode === "create" ? "新建一个 TA" : "编辑这个 TA"}
+        </h1>
+      </div>
+      <p className="text-sm text-muted-foreground mb-8">
+        慢慢来，把记忆里的 TA 一点点描出来。越细致，重逢越像。
+      </p>
 
       <form onSubmit={submit}>
         <Card className="p-6 space-y-5">
