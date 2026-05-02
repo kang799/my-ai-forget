@@ -122,6 +122,10 @@
   html, body { height: 100%; }
   body {
     background-color: var(--color-background);
+    background-image:
+      radial-gradient(at 12% 8%, color-mix(in oklab, var(--brand) 14%, transparent) 0px, transparent 50%),
+      radial-gradient(at 88% 92%, color-mix(in oklab, var(--accent) 35%, transparent) 0px, transparent 55%);
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
