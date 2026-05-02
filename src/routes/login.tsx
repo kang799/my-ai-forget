@@ -59,6 +59,26 @@ function LoginPage() {
   );
 }
 
+function translateAuthError(msg?: string): string {
+  if (!msg) return "操作失败，请稍后再试";
+  const m = msg.toLowerCase();
+  if (m.includes("password is known to be weak") || m.includes("weak_password") || m.includes("pwned"))
+    return "该密码过于常见，容易被猜中，请换一个更复杂的密码（建议 8 位以上，混合字母数字与符号）。";
+  if (m.includes("invalid login credentials") || m.includes("invalid_credentials"))
+    return "邮箱或密码不正确。";
+  if (m.includes("user already registered") || m.includes("already registered"))
+    return "该邮箱已注册，请直接登录。";
+  if (m.includes("email not confirmed"))
+    return "邮箱尚未验证，请先到邮箱完成验证。";
+  if (m.includes("password should be at least"))
+    return "密码长度不足，请至少使用 8 位字符。";
+  if (m.includes("rate limit") || m.includes("too many"))
+    return "操作过于频繁，请稍后再试。";
+  if (m.includes("network") || m.includes("failed to fetch"))
+    return "网络连接异常，请检查网络后重试。";
+  return msg;
+}
+
 function EmailAuth() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -93,7 +113,7 @@ function EmailAuth() {
         navigate({ to: "/characters" });
       }
     } catch (e: any) {
-      toast.error(e.message ?? "操作失败");
+      toast.error(translateAuthError(e?.message));
     } finally {
       setBusy(false);
     }
@@ -107,7 +127,10 @@ function EmailAuth() {
       </div>
       <div>
         <Label htmlFor="password">密码</Label>
-        <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "至少 8 位，避免常见弱密码" : ""} />
+        {mode === "signup" && (
+          <p className="text-xs text-muted-foreground mt-1.5">为了你的账户安全，请避免使用 123456、password、qwerty 等常见密码。建议混合字母、数字与符号。</p>
+        )}
       </div>
       <Button type="submit" className="w-full" disabled={busy}>
         {busy && <Loader2 className="size-4 animate-spin" />}
