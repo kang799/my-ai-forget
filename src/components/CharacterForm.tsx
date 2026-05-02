@@ -267,13 +267,50 @@ export function CharacterForm({
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <Label>上传录音（可选）</Label>
-              <Input type="file" accept="audio/*" onChange={(e) => setVoice(e.target.files?.[0] ?? null)} />
+            <div className="space-y-1.5">
+              <Label>上传 TA 的录音（可选）</Label>
+              <Input
+                type="file"
+                accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,audio/aac,audio/ogg,audio/webm,.mp3,.m4a,.wav,.aac,.ogg,.webm"
+                onChange={(e) => setVoice(e.target.files?.[0] ?? null)}
+              />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                支持 <span className="font-medium text-foreground/80">.mp3 / .m4a / .wav / .aac / .ogg / .webm</span>，单文件 ≤ 20MB。
+                哪怕只是一段几秒的语音、一段视频里的笑声，都能帮 AI 更贴近 TA 的语气。
+              </p>
             </div>
-            <div>
-              <Label>上传聊天记录（可选）</Label>
-              <Input type="file" accept=".txt,.json,.csv" onChange={(e) => setChatlog(e.target.files?.[0] ?? null)} />
+            <div className="space-y-1.5">
+              <Label>上传你们的聊天记录（可选）</Label>
+              <Input
+                type="file"
+                accept=".txt,.json,.csv,.html,.md"
+                onChange={(e) => setChatlog(e.target.files?.[0] ?? null)}
+              />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                支持 <span className="font-medium text-foreground/80">.txt / .json / .csv / .html / .md</span>。
+                聊天记录越多，TA 的"灵魂"就越清晰。
+              </p>
+              <div className="rounded-lg bg-accent/40 border border-border/60 p-2.5 text-xs space-y-1.5 mt-1.5">
+                <div className="font-medium text-foreground/90">📱 不知道怎么导出微信聊天记录?</div>
+                <div className="text-muted-foreground">推荐这些工具,几步就能把记录导成文本:</div>
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  <a href="https://github.com/LC044/WeChatMsg" target="_blank" rel="noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card border hover:border-brand hover:text-brand transition-colors">
+                    留痕 (Windows) <ExternalLink className="size-3" />
+                  </a>
+                  <a href="https://github.com/git-jiadong/wechatDataBackup" target="_blank" rel="noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card border hover:border-brand hover:text-brand transition-colors">
+                    WechatDataBackup <ExternalLink className="size-3" />
+                  </a>
+                  <a href="https://github.com/BlueMatthew/WechatExporter" target="_blank" rel="noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-card border hover:border-brand hover:text-brand transition-colors">
+                    WechatExporter (Mac) <ExternalLink className="size-3" />
+                  </a>
+                </div>
+                <div className="text-muted-foreground/80 pt-1">
+                  导出后选择 <span className="text-foreground/80">TXT / HTML</span> 格式上传即可。所有数据仅用于训练这个角色,不会外泄。
+                </div>
+              </div>
             </div>
           </div>
 
