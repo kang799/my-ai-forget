@@ -55,7 +55,7 @@ function LandingPage() {
             和你脑海里的那个人，{"\n"}最后再聊一次。
           </h1>
           <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            深夜你又一次翻遍了 ta 的动态，在和你无关的生活里找曾经的影子。
+            深夜你又一次翻遍了 ta 的动态，在和你无关的生活里找曾经的影子。赌书xiao'de'bochaxiang
             「忘了么」用 AI 重建那个人的语气与习惯，让你把没说完的话说完，
             然后真正地，向前走。
           </p>
@@ -93,7 +93,7 @@ function LandingPage() {
             {
               icon: ShieldCheck,
               title: "戒瘾模式陪你走出来",
-              desc: "可开启 6 个月戒瘾模式，AI 会逐步引导你走出过去，而不是沉溺其中。",
+              desc: "可开启 6 个月戒瘾模式，AI 会逐步引导你走出过去，我发明这款软件的初衷是希望您不再使用",
             },
           ].map((f) => (
             <div key={f.title} className="p-6 rounded-2xl bg-card border hairline">
