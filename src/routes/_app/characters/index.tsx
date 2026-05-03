@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, MessageSquare, Pencil, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
+import { LoginDialog } from "@/components/LoginDialog";
 
 export const Route = createFileRoute("/_app/characters/")({
   component: CharactersList,
@@ -24,9 +26,16 @@ type Character = {
 function CharactersList() {
   const [list, setList] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loginOpen, setLoginOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
   async function load() {
+    if (!user) {
+      setList([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from("characters")
@@ -37,7 +46,10 @@ function CharactersList() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (!authLoading) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user?.id]);
 
   async function remove(id: string) {
     if (!confirm("确认删除这个角色？相关聊天记录也会一并删除。")) return;
@@ -47,6 +59,14 @@ function CharactersList() {
     load();
   }
 
+  function onCreateClick() {
+    if (!user) {
+      setLoginOpen(true);
+      return;
+    }
+    navigate({ to: "/characters/new" });
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex items-end justify-between mb-8">
@@ -54,15 +74,26 @@ function CharactersList() {
           <h1 className="text-3xl font-semibold tracking-tight">角色</h1>
           <p className="text-sm text-muted-foreground mt-1">创建并管理你的 AI 对话对象。</p>
         </div>
-        <Button onClick={() => navigate({ to: "/characters/new" })}>
+        <Button onClick={onCreateClick}>
           <Plus className="size-4" />新建角色
         </Button>
       </div>
 
-      {loading ? (
+      {loading || authLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[0,1,2].map(i => <div key={i} className="h-40 rounded-xl bg-muted animate-pulse" />)}
         </div>
+      ) : !user ? (
+        <Card className="p-12 text-center border-dashed">
+          <div className="mx-auto size-12 rounded-full bg-secondary grid place-items-center mb-4">
+            <Sparkles className="size-5 text-brand" />
+          </div>
+          <h3 className="font-medium">登录后即可创建你的专属角色</h3>
+          <p className="text-sm text-muted-foreground mt-1 mb-6">
+            注册一个账号，几分钟即可开始你的第一次对话。
+          </p>
+          <Button onClick={() => setLoginOpen(true)}>登录 / 注册</Button>
+        </Card>
       ) : list.length === 0 ? (
         <Card className="p-12 text-center border-dashed">
           <div className="mx-auto size-12 rounded-full bg-secondary grid place-items-center mb-4">
@@ -70,7 +101,7 @@ function CharactersList() {
           </div>
           <h3 className="font-medium">还没有角色</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-6">从一段简短描述开始，创建你的第一个角色。</p>
-          <Button onClick={() => navigate({ to: "/characters/new" })}>
+          <Button onClick={onCreateClick}>
             <Plus className="size-4" />创建第一个角色
           </Button>
         </Card>
@@ -119,6 +150,8 @@ function CharactersList() {
           ))}
         </div>
       )}
+
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 }
