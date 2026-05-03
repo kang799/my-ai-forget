@@ -55,7 +55,7 @@ function LandingPage() {
             和你脑海里的那个人，{"\n"}最后再聊一次。
           </h1>
           <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            深夜你又一次翻遍了 ta 的动态，在和你无关的生活里找曾经的影子。赌书xiao'de'bochaxiang
+            深夜你又一次沉浸在回忆的碎片里，在记忆里找曾经的影子。赌书消得泼茶香 ，当时只道是寻常。
             「忘了么」用 AI 重建那个人的语气与习惯，让你把没说完的话说完，
             然后真正地，向前走。
           </p>
