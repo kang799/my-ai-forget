@@ -126,8 +126,9 @@ function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t py-8 text-center text-xs text-muted-foreground">
-        © kangshuhao · 忘了么
+      <footer className="border-t py-8 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
+        <p>© kangshuhao · 忘了么</p>
+        <p>联系我们：<a href="mailto:3404782415@qq.com" className="hover:underline">3404782415@qq.com</a></p>
       </footer>
 
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} title="欢迎来到忘了么" description="登录或注册一个账号，开始你的第一次对话。" />
