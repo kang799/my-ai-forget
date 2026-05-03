@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, MessageCircle, Trash2, Heart, Phone } from "lucide-react";
+import { Loader2, Send, MessageCircle, Trash2, Heart, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/community")({
@@ -30,7 +30,7 @@ type Comment = {
   created_at: string;
 };
 
-const TEAM_PHONE = "+86 17513276307";
+const TEAM_CONTACT = "3404782415@qq.com";
 
 function CommunityPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -163,10 +163,10 @@ function CommunityPage() {
       {/* 制作团队联系方式 */}
       <Card className="p-3 mb-6 bg-muted/40 border-dashed">
         <div className="flex items-center gap-2 text-sm">
-          <Phone className="size-4 text-muted-foreground" />
+          <Mail className="size-4 text-muted-foreground" />
           <span className="text-muted-foreground">制作团队联系方式：</span>
-          <a href={`tel:${TEAM_PHONE.replace(/\s/g, "")}`} className="font-medium hover:underline">
-            {TEAM_PHONE}
+          <a href="" className="font-medium hover:underline">
+            {TEAM_CONTACT}
           </a>
         </div>
       </Card>
