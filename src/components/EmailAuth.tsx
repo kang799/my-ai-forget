@@ -39,40 +39,28 @@ export function EmailAuth({
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"form" | "verify">("form");
   const [busy, setBusy] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
-
-  function startCooldown() {
-    setResendCooldown(60);
-    const t = setInterval(() => {
-      setResendCooldown((s) => {
-        if (s <= 1) { clearInterval(t); return 0; }
-        return s - 1;
-      });
-    }, 1000);
-  }
-
-  async function sendSignupCode() {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    if (error) throw error;
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
       if (mode === "signup") {
-        await sendSignupCode();
-        toast.success("验证码已发送至邮箱，请注意查收");
-        setStep("verify");
-        startCooldown();
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) {
+          toast.success("注册成功，请登录");
+          setMode("signin");
+        } else {
+          toast.success("注册成功");
+          onSuccess ? onSuccess() : navigate({ to: redirectTo as any });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -84,74 +72,6 @@ export function EmailAuth({
     } finally {
       setBusy(false);
     }
-  }
-
-  async function verifyCode(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp.trim(),
-        type: "email",
-      });
-      if (error) throw error;
-      toast.success("注册成功");
-      onSuccess ? onSuccess() : navigate({ to: redirectTo as any });
-    } catch (e: any) {
-      toast.error(translateAuthError(e?.message) || "验证码错误或已过期");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function resendCode() {
-    if (resendCooldown > 0) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.auth.resend({ type: "signup", email });
-      if (error) throw error;
-      toast.success("验证码已重新发送");
-      startCooldown();
-    } catch (e: any) {
-      toast.error(translateAuthError(e?.message));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (step === "verify") {
-    return (
-      <form onSubmit={verifyCode} className="space-y-3">
-        <div>
-          <p className="text-sm text-muted-foreground mb-3">
-            我们已向 <span className="font-medium text-foreground">{email}</span> 发送了 6 位验证码，请在邮件中查收并输入。
-          </p>
-          <Label htmlFor="otp">邮箱验证码</Label>
-          <Input
-            id="otp"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            required
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="6 位数字验证码"
-          />
-        </div>
-        <Button type="submit" className="w-full" disabled={busy || otp.length < 6}>
-          {busy && <Loader2 className="size-4 animate-spin" />}
-          完成注册
-        </Button>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <button type="button" onClick={() => { setStep("form"); setOtp(""); }} className="hover:text-foreground transition-colors">
-            返回修改邮箱
-          </button>
-          <button type="button" onClick={resendCode} disabled={busy || resendCooldown > 0} className="hover:text-foreground transition-colors disabled:opacity-50">
-            {resendCooldown > 0 ? `${resendCooldown}s 后可重发` : "重新发送验证码"}
-          </button>
-        </div>
-      </form>
-    );
   }
 
   return (
@@ -169,7 +89,7 @@ export function EmailAuth({
       </div>
       <Button type="submit" className="w-full" disabled={busy}>
         {busy && <Loader2 className="size-4 animate-spin" />}
-        {mode === "signin" ? "登录" : "发送验证码"}
+        {mode === "signin" ? "登录" : "注册"}
       </Button>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="hover:text-foreground transition-colors">
