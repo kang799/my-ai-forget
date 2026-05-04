@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Heart, Sparkles, MessageSquare, ShieldCheck, ArrowRight } from "lucide-react";
+import { Heart, Sparkles, MessageSquare, ShieldCheck, ArrowRight, Smartphone, Apple, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
 import { LoginDialog } from "@/components/LoginDialog";
@@ -123,6 +123,44 @@ function LandingPage() {
               </Button>
             )}
           </div>
+        </section>
+        {/* Download */}
+        <section className="max-w-5xl mx-auto px-4 pb-20">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">下载手机客户端</h2>
+            <p className="mt-2 text-sm text-muted-foreground">把 ta 装进口袋，随时随地继续未完的对话。</p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <a
+              href="#"
+              className="group p-6 rounded-2xl bg-card border hairline flex items-center gap-4 transition-colors hover:bg-secondary"
+            >
+              <div className="size-12 rounded-xl bg-foreground text-background grid place-items-center shrink-0">
+                <Apple className="size-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-muted-foreground">下载 iOS 版</div>
+                <div className="font-medium">App Store</div>
+              </div>
+              <Download className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </a>
+            <a
+              href="#"
+              className="group p-6 rounded-2xl bg-card border hairline flex items-center gap-4 transition-colors hover:bg-secondary"
+            >
+              <div className="size-12 rounded-xl bg-foreground text-background grid place-items-center shrink-0">
+                <Smartphone className="size-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-muted-foreground">下载 Android 版</div>
+                <div className="font-medium">APK / 应用商店</div>
+              </div>
+              <Download className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </a>
+          </div>
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            客户端正在内测中，敬请期待。
+          </p>
         </section>
       </main>
 
