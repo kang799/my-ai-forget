@@ -131,21 +131,24 @@ function LandingPage() {
             <p className="mt-2 text-sm text-muted-foreground">把 ta 装进口袋，随时随地继续未完的对话。</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <a
-              href="#"
-              className="group p-6 rounded-2xl bg-card border hairline flex items-center gap-4 transition-colors hover:bg-secondary"
+            {/* iOS — coming soon */}
+            <div
+              aria-disabled
+              className="p-6 rounded-2xl bg-muted/40 border border-dashed flex items-center gap-4 opacity-60 cursor-not-allowed select-none"
             >
-              <div className="size-12 rounded-xl bg-foreground text-background grid place-items-center shrink-0">
+              <div className="size-12 rounded-xl bg-muted-foreground/30 text-background grid place-items-center shrink-0">
                 <Apple className="size-6" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground">下载 iOS 版</div>
-                <div className="font-medium">App Store</div>
+                <div className="text-xs text-muted-foreground">iOS 版</div>
+                <div className="font-medium text-muted-foreground">暂未开放，敬请期待</div>
               </div>
-              <Download className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            </a>
+            </div>
+
+            {/* Android — available */}
             <a
-              href="#"
+              href="/downloads/wangleme.apk"
+              download
               className="group p-6 rounded-2xl bg-card border hairline flex items-center gap-4 transition-colors hover:bg-secondary"
             >
               <div className="size-12 rounded-xl bg-foreground text-background grid place-items-center shrink-0">
@@ -153,13 +156,13 @@ function LandingPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-muted-foreground">下载 Android 版</div>
-                <div className="font-medium">APK / 应用商店</div>
+                <div className="font-medium">忘了么 .apk</div>
               </div>
               <Download className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             </a>
           </div>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            客户端正在内测中，敬请期待。
+            Android 安装时如提示"未知来源"，请在系统设置中允许后继续。
           </p>
         </section>
       </main>
