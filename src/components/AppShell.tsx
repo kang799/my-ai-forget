@@ -1,12 +1,14 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { Users, MessageSquare, LogOut, Heart, Globe2, LogIn } from "lucide-react";
+import { useIsAdmin } from "@/lib/useIsAdmin";
+import { Users, MessageSquare, LogOut, Heart, Globe2, LogIn, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoginDialog } from "@/components/LoginDialog";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const [loginOpen, setLoginOpen] = useState(false);
@@ -15,6 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/characters", label: "角色", icon: Users },
     { to: "/chat", label: "对话", icon: MessageSquare },
     { to: "/community", label: "社群", icon: Globe2 },
+    ...(isAdmin ? [{ to: "/admin", label: "管理", icon: ShieldAlert }] : []),
   ];
 
   return (
