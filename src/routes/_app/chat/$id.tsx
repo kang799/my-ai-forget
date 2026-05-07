@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Send, Loader2, MoreHorizontal, Mic, Keyboard, Play, Pause } from "lucide-react";
+import { ArrowLeft, Send, Loader2, MoreHorizontal, Mic, Keyboard, Play } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/chat/$id")({
