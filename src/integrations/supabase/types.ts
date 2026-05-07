@@ -156,25 +156,31 @@ export type Database = {
       }
       messages: {
         Row: {
+          audio_url: string | null
           character_id: string
           content: string
           created_at: string
+          duration_ms: number | null
           id: string
           role: string
           user_id: string
         }
         Insert: {
+          audio_url?: string | null
           character_id: string
           content: string
           created_at?: string
+          duration_ms?: number | null
           id?: string
           role: string
           user_id: string
         }
         Update: {
+          audio_url?: string | null
           character_id?: string
           content?: string
           created_at?: string
+          duration_ms?: number | null
           id?: string
           role?: string
           user_id?: string
