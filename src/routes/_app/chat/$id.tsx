@@ -174,6 +174,67 @@ function ChatPage() {
     toast.success("已清空");
   }
 
+  async function deleteMessage(msg: Msg) {
+    if (!msg.id) {
+      setMessages((arr) => arr.filter((x) => x !== msg));
+      return;
+    }
+    const { error } = await supabase.from("messages").delete().eq("id", msg.id);
+    if (error) return toast.error(error.message);
+    setMessages((arr) => arr.filter((x) => x.id !== msg.id));
+  }
+
+  async function recallMessage(msg: Msg) {
+    // WeChat-like: only within 2 minutes
+    if (msg.created_at) {
+      const ageMs = Date.now() - new Date(msg.created_at).getTime();
+      if (ageMs > 2 * 60 * 1000) {
+        toast.error("发送已超过 2 分钟，无法撤回");
+        return;
+      }
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    if (msg.id) {
+      const { error } = await supabase.from("messages").delete().eq("id", msg.id);
+      if (error) return toast.error(error.message);
+    }
+    const sysText = "你撤回了一条消息";
+    const { data: inserted } = await supabase
+      .from("messages")
+      .insert({ user_id: user.id, character_id: id, role: "system", content: sysText })
+      .select()
+      .single();
+    setMessages((arr) => {
+      const filtered = arr.filter((x) => x.id !== msg.id);
+      return [...filtered, (inserted as Msg) ?? { role: "system", content: sysText }];
+    });
+  }
+
+  async function transcribeMessage(msg: Msg): Promise<string> {
+    if (msg.transcript && msg.transcript.trim()) return msg.transcript;
+    if (!msg.audio_url) return "";
+    try {
+      const blob = await fetch(msg.audio_url).then((r) => r.blob());
+      const base64 = await blobToBase64(blob);
+      const { data, error } = await supabase.functions.invoke("transcribe", {
+        body: { audio: base64, mime: blob.type || "audio/webm" },
+      });
+      if (error) throw error;
+      const text = (data?.text ?? "").toString().trim();
+      if (!text) { toast.message("没识别到内容"); return ""; }
+      if (msg.id) {
+        await supabase.from("messages").update({ transcript: text }).eq("id", msg.id);
+      }
+      setMessages((arr) => arr.map((x) => (x.id === msg.id ? { ...x, transcript: text } : x)));
+      return text;
+    } catch (e: any) {
+      toast.error("转写失败：" + (e?.message ?? ""));
+      return "";
+    }
+  }
+
+
   async function nudge(target: "me" | "them") {
     if (!character) return;
     const myName = "我";
