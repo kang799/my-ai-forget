@@ -318,6 +318,19 @@ function ChatPage() {
   );
 }
 
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onloadend = () => {
+      const s = String(r.result || "");
+      const idx = s.indexOf(",");
+      resolve(idx >= 0 ? s.slice(idx + 1) : s);
+    };
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
 function HoldToTalk({
   onFinish, disabled,
 }: { onFinish: (blob: Blob, ms: number) => void; disabled?: boolean }) {
