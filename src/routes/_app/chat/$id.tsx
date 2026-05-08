@@ -89,7 +89,11 @@ function ChatPage() {
           character_id: id,
           messages: history
             .filter((m) => m.role !== "system")
-            .map((m) => ({ role: m.role, content: m.audio_url ? "[语音消息]" : m.content })),
+            .map((m) => ({
+              role: m.role,
+              content: m.audio_url ? "[语音消息]" : m.content,
+              audio_url: m.audio_url ?? null,
+            })),
         }),
       });
       const data = await resp.json();
