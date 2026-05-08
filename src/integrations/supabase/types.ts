@@ -163,7 +163,6 @@ export type Database = {
           duration_ms: number | null
           id: string
           role: string
-          transcript: string | null
           user_id: string
         }
         Insert: {
@@ -174,7 +173,6 @@ export type Database = {
           duration_ms?: number | null
           id?: string
           role: string
-          transcript?: string | null
           user_id: string
         }
         Update: {
@@ -185,7 +183,6 @@ export type Database = {
           duration_ms?: number | null
           id?: string
           role?: string
-          transcript?: string | null
           user_id?: string
         }
         Relationships: [

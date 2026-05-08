@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Sanitize/limit messages (text only — voice is transcribed before sending)
+    // Sanitize/limit messages (basic input validation)
     const safeMessages = messages
       .filter((m: any) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"))
       .slice(-40)
