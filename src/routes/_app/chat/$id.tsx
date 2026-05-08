@@ -320,6 +320,9 @@ function ChatPage() {
                 shake={shake}
                 onNudge={nudge}
                 partnerAvatar={partnerAvatar}
+                onDelete={deleteMessage}
+                onRecall={recallMessage}
+                onTranscribe={transcribeMessage}
               />
             );
           })}
