@@ -2,3 +2,6 @@ project_id = "rygbnqpehdkdsdejmdlx"
 
 [functions.chat]
 verify_jwt = true
+
+[functions.transcribe]
+verify_jwt = true
