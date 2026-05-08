@@ -600,8 +600,8 @@ function TextBubble({
   msg, isUser, onDelete, onRecall,
 }: {
   msg: Msg; isUser: boolean;
-  onDelete: (m: Msg) => void | Promise<void>;
-  onRecall: (m: Msg) => void | Promise<void>;
+  onDelete: (m: Msg) => unknown;
+  onRecall: (m: Msg) => unknown;
 }) {
   const { bind, menu } = useLongPressMenu({
     items: [
