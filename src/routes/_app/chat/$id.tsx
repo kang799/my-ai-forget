@@ -163,6 +163,10 @@ function ChatPage() {
       content: userMsg.content, audio_url, duration_ms: durationMs,
       transcript: transcript || null,
     });
+    if (!transcript) {
+      toast.error("没识别到语音内容，AI 暂不回复");
+      return;
+    }
     await callAI([...messages, userMsg]);
   }
 
