@@ -126,48 +126,62 @@ function ChatPage() {
   async function sendVoice(blob: Blob, durationMs: number) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from("voices").upload(path, blob, {
-      contentType: blob.type || "audio/webm",
-      upsert: false,
-    });
-    if (upErr) { toast.error(upErr.message); return; }
-    const { data: pub } = supabase.storage.from("voices").getPublicUrl(path);
-    const audio_url = pub.publicUrl;
 
-    // Transcribe via edge function so AI can actually understand the voice
-    let transcript = "";
-    try {
-      const base64 = await blobToBase64(blob);
-      const { data: tData, error: tErr } = await supabase.functions.invoke("transcribe", {
-        body: { audio: base64, mime: blob.type || "audio/webm" },
-      });
-      if (tErr) throw tErr;
-      transcript = (tData?.text ?? "").toString().trim();
-    } catch (e: any) {
-      console.error("transcribe failed", e);
-      toast.error("语音转写失败：" + (e?.message ?? ""));
-    }
-
-    const userMsg: Msg = {
-      role: "user",
-      content: transcript ? transcript : "[语音消息]",
-      audio_url,
-      duration_ms: durationMs,
-      transcript: transcript || null,
+    // 1. Show locally immediately for instant feedback
+    const localUrl = URL.createObjectURL(blob);
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const tempMsg: Msg = {
+      id: tempId, role: "user", content: "[语音消息]",
+      audio_url: localUrl, duration_ms: durationMs, transcript: null,
     };
-    setMessages((m) => [...m, userMsg]);
-    await supabase.from("messages").insert({
-      user_id: user.id, character_id: id, role: "user",
-      content: userMsg.content, audio_url, duration_ms: durationMs,
-      transcript: transcript || null,
-    });
-    if (!transcript) {
-      toast.error("没识别到语音内容，AI 暂不回复");
-      return;
-    }
-    await callAI([...messages, userMsg]);
+    setMessages((m) => [...m, tempMsg]);
+
+    // 2. Upload + transcribe in background, then trigger AI
+    (async () => {
+      const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("voices").upload(path, blob, {
+        contentType: blob.type || "audio/webm",
+        upsert: false,
+      });
+      if (upErr) { toast.error(upErr.message); return; }
+      const { data: pub } = supabase.storage.from("voices").getPublicUrl(path);
+      const audio_url = pub.publicUrl;
+
+      let transcript = "";
+      try {
+        const base64 = await blobToBase64(blob);
+        const { data: tData, error: tErr } = await supabase.functions.invoke("transcribe", {
+          body: { audio: base64, mime: blob.type || "audio/webm" },
+        });
+        if (tErr) throw tErr;
+        transcript = (tData?.text ?? "").toString().trim();
+      } catch (e: any) {
+        console.error("transcribe failed", e);
+      }
+
+      const content = transcript ? transcript : "[语音消息]";
+      const { data: inserted } = await supabase.from("messages").insert({
+        user_id: user.id, character_id: id, role: "user",
+        content, audio_url, duration_ms: durationMs,
+        transcript: transcript || null,
+      }).select().single();
+
+      const finalMsg: Msg = (inserted as Msg) ?? {
+        role: "user", content, audio_url, duration_ms: durationMs, transcript: transcript || null,
+      };
+      setMessages((arr) => arr.map((x) => (x.id === tempId ? finalMsg : x)));
+
+      if (!transcript) {
+        toast.error("没识别到语音内容，AI 暂不回复");
+        return;
+      }
+      // Use latest messages snapshot for AI history
+      setMessages((curr) => {
+        callAI(curr);
+        return curr;
+      });
+    })();
   }
 
   async function clearHistory() {
