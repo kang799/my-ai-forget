@@ -135,11 +135,33 @@ function ChatPage() {
     if (upErr) { toast.error(upErr.message); return; }
     const { data: pub } = supabase.storage.from("voices").getPublicUrl(path);
     const audio_url = pub.publicUrl;
-    const userMsg: Msg = { role: "user", content: "[语音消息]", audio_url, duration_ms: durationMs };
+
+    // Transcribe via edge function so AI can actually understand the voice
+    let transcript = "";
+    try {
+      const base64 = await blobToBase64(blob);
+      const { data: tData, error: tErr } = await supabase.functions.invoke("transcribe", {
+        body: { audio: base64, mime: blob.type || "audio/webm" },
+      });
+      if (tErr) throw tErr;
+      transcript = (tData?.text ?? "").toString().trim();
+    } catch (e: any) {
+      console.error("transcribe failed", e);
+      toast.error("语音转写失败：" + (e?.message ?? ""));
+    }
+
+    const userMsg: Msg = {
+      role: "user",
+      content: transcript ? transcript : "[语音消息]",
+      audio_url,
+      duration_ms: durationMs,
+      transcript: transcript || null,
+    };
     setMessages((m) => [...m, userMsg]);
     await supabase.from("messages").insert({
       user_id: user.id, character_id: id, role: "user",
-      content: "[语音消息]", audio_url, duration_ms: durationMs,
+      content: userMsg.content, audio_url, duration_ms: durationMs,
+      transcript: transcript || null,
     });
     await callAI([...messages, userMsg]);
   }
