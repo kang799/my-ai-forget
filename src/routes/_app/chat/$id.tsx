@@ -428,51 +428,110 @@ function HoldToTalk({
   );
 }
 
-function VoiceBubble({ url, ms, isUser }: { url: string; ms: number; isUser: boolean }) {
+function VoiceBubble({
+  url, ms, isUser, transcript, msgId,
+}: { url: string; ms: number; isUser: boolean; transcript?: string | null; msgId?: string }) {
   const [playing, setPlaying] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [loadingText, setLoadingText] = useState(false);
+  const [localTranscript, setLocalTranscript] = useState<string | null>(transcript ?? null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const longPressed = useRef(false);
   const seconds = Math.max(1, Math.round(ms / 1000));
-  // Width scales with duration (60s max), like WeChat
   const width = Math.min(220, 70 + seconds * 4);
 
   function toggle() {
+    if (longPressed.current) { longPressed.current = false; return; }
     if (!audioRef.current) {
       audioRef.current = new Audio(url);
       audioRef.current.onended = () => setPlaying(false);
       audioRef.current.onpause = () => setPlaying(false);
     }
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    if (playing) { audioRef.current.pause(); setPlaying(false); }
+    else { audioRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false)); }
+  }
+
+  // Only the user's own voice can be converted to text (like WeChat)
+  async function handleConvert() {
+    if (!isUser) return;
+    if (localTranscript) { setShowTranscript((s) => !s); return; }
+    setLoadingText(true);
+    setShowTranscript(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const tr = await fetch(`${SUPABASE_URL}/functions/v1/transcribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ audio_url: url }),
+      });
+      const data = await tr.json();
+      if (!tr.ok) throw new Error(data.error || "转换失败");
+      const text = (data.text as string) || "";
+      setLocalTranscript(text);
+      if (msgId) {
+        await supabase.from("messages").update({ transcript: text }).eq("id", msgId);
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "转换失败");
+      setShowTranscript(false);
+    } finally {
+      setLoadingText(false);
     }
   }
 
+  function startPress() {
+    if (!isUser) return;
+    longPressed.current = false;
+    pressTimer.current = window.setTimeout(() => {
+      longPressed.current = true;
+      handleConvert();
+    }, 500);
+  }
+  function cancelPress() {
+    if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; }
+  }
+
   return (
-    <button
-      onClick={toggle}
-      style={{ width }}
-      className={
-        "px-3 py-2.5 text-[14.5px] flex items-center gap-3 select-none " +
-        (isUser ? "wechat-bubble-me mr-1 flex-row-reverse" : "wechat-bubble-them ml-1")
-      }
-    >
-      <span className="inline-flex items-end gap-0.5 h-4 text-foreground/70 w-5 justify-center">
-        {playing ? (
-          <>
-            <span className="voice-bar" />
-            <span className="voice-bar" />
-            <span className="voice-bar" />
-          </>
-        ) : isUser ? (
-          <Play className="size-4" />
-        ) : (
-          <Play className="size-4 -scale-x-100" />
-        )}
-      </span>
-      <span className="tabular-nums text-foreground/80">{seconds}″</span>
-    </button>
+    <div className={"flex flex-col gap-1 " + (isUser ? "items-end" : "items-start")}>
+      <button
+        onClick={toggle}
+        onPointerDown={startPress}
+        onPointerUp={cancelPress}
+        onPointerLeave={cancelPress}
+        onPointerCancel={cancelPress}
+        onContextMenu={(e) => { e.preventDefault(); handleConvert(); }}
+        style={{ width }}
+        className={
+          "px-3 py-2.5 text-[14.5px] flex items-center gap-3 select-none " +
+          (isUser ? "wechat-bubble-me mr-1 flex-row-reverse" : "wechat-bubble-them ml-1")
+        }
+        title={isUser ? "长按 转文字" : undefined}
+      >
+        <span className="inline-flex items-end gap-0.5 h-4 text-foreground/70 w-5 justify-center">
+          {playing ? (
+            <>
+              <span className="voice-bar" />
+              <span className="voice-bar" />
+              <span className="voice-bar" />
+            </>
+          ) : isUser ? (
+            <Play className="size-4" />
+          ) : (
+            <Play className="size-4 -scale-x-100" />
+          )}
+        </span>
+        <span className="tabular-nums text-foreground/80">{seconds}″</span>
+      </button>
+      {showTranscript && (
+        <div className={"max-w-[72%] text-[13.5px] leading-relaxed whitespace-pre-wrap rounded bg-black/5 text-foreground/80 px-3 py-2 " + (isUser ? "mr-1" : "ml-1")}>
+          {loadingText ? "正在转换…" : (localTranscript || "（无内容）")}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -506,7 +565,7 @@ function Bubble({
     <div className={"flex gap-2 items-start " + (isUser ? "flex-row-reverse" : "")}>
       {isUser ? meAvatar : partnerAvatar}
       {msg.audio_url ? (
-        <VoiceBubble url={msg.audio_url} ms={msg.duration_ms ?? 1000} isUser={isUser} />
+        <VoiceBubble url={msg.audio_url} ms={msg.duration_ms ?? 1000} isUser={isUser} transcript={msg.transcript} msgId={msg.id} />
       ) : (
         <div
           className={
