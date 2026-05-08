@@ -18,6 +18,7 @@ type Msg = {
   created_at?: string;
   audio_url?: string | null;
   duration_ms?: number | null;
+  transcript?: string | null;
 };
 
 type Character = {
@@ -91,8 +92,8 @@ function ChatPage() {
             .filter((m) => m.role !== "system")
             .map((m) => ({
               role: m.role,
-              content: m.audio_url ? "[语音消息]" : m.content,
-              audio_url: m.audio_url ?? null,
+              // For voice messages, send the transcript as content so the AI understands
+              content: m.audio_url ? (m.transcript || "[语音消息]") : m.content,
             })),
         }),
       });
@@ -133,11 +134,38 @@ function ChatPage() {
     if (upErr) { toast.error(upErr.message); return; }
     const { data: pub } = supabase.storage.from("voices").getPublicUrl(path);
     const audio_url = pub.publicUrl;
-    const userMsg: Msg = { role: "user", content: "[语音消息]", audio_url, duration_ms: durationMs };
-    setMessages((m) => [...m, userMsg]);
+
+    // Optimistically show the voice bubble immediately
+    const tempMsg: Msg = { role: "user", content: "[语音消息]", audio_url, duration_ms: durationMs };
+    setMessages((m) => [...m, tempMsg]);
+    setSending(true);
+
+    // Silently transcribe in background — user doesn't see this step
+    let transcript = "";
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const tr = await fetch(`${SUPABASE_URL}/functions/v1/transcribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ audio_url }),
+      });
+      const trData = await tr.json();
+      if (tr.ok) transcript = (trData.text as string) || "";
+    } catch (e) {
+      console.error("transcribe failed", e);
+    }
+
+    const userMsg: Msg = { ...tempMsg, transcript };
+    // Update local state with transcript attached
+    setMessages((m) => m.map((x) => (x === tempMsg ? userMsg : x)));
+
     await supabase.from("messages").insert({
       user_id: user.id, character_id: id, role: "user",
       content: "[语音消息]", audio_url, duration_ms: durationMs,
+      transcript: transcript || null,
     });
     await callAI([...messages, userMsg]);
   }
