@@ -24,6 +24,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {!hideHeader && (
       <header className="sticky top-0 z-30 glass border-b">
         <div className="max-w-6xl mx-auto h-14 px-4 flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
