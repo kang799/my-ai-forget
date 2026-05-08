@@ -18,6 +18,7 @@ type Msg = {
   created_at?: string;
   audio_url?: string | null;
   duration_ms?: number | null;
+  transcript?: string | null;
 };
 
 type Character = {
