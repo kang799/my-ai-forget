@@ -557,8 +557,8 @@ function Bubble({
   shake: "me" | "them" | null;
   onNudge: (t: "me" | "them") => void;
   partnerAvatar: React.ReactNode;
-  onDelete: (msg: Msg) => void | Promise<void>;
-  onRecall: (msg: Msg) => void | Promise<void>;
+  onDelete: (msg: Msg) => unknown;
+  onRecall: (msg: Msg) => unknown;
   onTranscribe: (msg: Msg) => Promise<string>;
 }) {
   const isUser = msg.role === "user";
