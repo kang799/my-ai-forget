@@ -617,13 +617,19 @@ function useLongPressMenu({ items }: {
     if (timer.current) { window.clearTimeout(timer.current); timer.current = null; }
   }
 
+  const longPressFired = useRef(false);
+
   const bind = {
     onPointerDown: (e: React.PointerEvent) => {
       if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 2) return;
       moved.current = false;
+      longPressFired.current = false;
       startPos.current = { x: e.clientX, y: e.clientY };
       clear();
-      timer.current = window.setTimeout(() => { setOpen(true); }, 450);
+      timer.current = window.setTimeout(() => {
+        longPressFired.current = true;
+        setOpen(true);
+      }, 450);
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (!startPos.current) return;
@@ -635,7 +641,12 @@ function useLongPressMenu({ items }: {
     onPointerCancel: () => { clear(); },
     onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); setOpen(true); },
     onClickCapture: (e: React.MouseEvent) => {
-      if (open) { e.stopPropagation(); e.preventDefault(); setOpen(false); }
+      // Suppress the synthetic click that follows a long-press, but DO NOT close the menu.
+      if (longPressFired.current) {
+        e.stopPropagation();
+        e.preventDefault();
+        longPressFired.current = false;
+      }
     },
   };
 
