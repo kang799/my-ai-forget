@@ -12,6 +12,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const [loginOpen, setLoginOpen] = useState(false);
+  // 进入具体对话页时隐藏顶部导航栏，模拟微信聊天界面
+  const hideHeader = /^\/chat\/[^/]+/.test(path);
 
   const nav = [
     { to: "/characters", label: "角色", icon: Users },
