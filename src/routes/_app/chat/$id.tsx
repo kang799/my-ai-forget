@@ -452,7 +452,12 @@ function HoldToTalk({
       setRecording(true);
       setSeconds(0);
       timerRef.current = window.setInterval(() => {
-        setSeconds(Math.floor((Date.now() - startRef.current) / 1000));
+        const s = Math.floor((Date.now() - startRef.current) / 1000);
+        setSeconds(s);
+        if (s >= 60) {
+          toast.message("已达 60 秒上限，自动发送");
+          stop();
+        }
       }, 200);
     } catch (err: any) {
       toast.error("无法访问麦克风：" + (err?.message ?? ""));
