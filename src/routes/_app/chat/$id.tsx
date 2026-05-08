@@ -295,7 +295,7 @@ function ChatPage() {
       <div className="bg-[#ededed] border-b border-black/10">
         <div className="max-w-3xl mx-auto px-3 h-12 flex items-center gap-2">
           <Button asChild variant="ghost" size="icon" className="text-foreground">
-            <Link to="/chat"><ArrowLeft className="size-5" /></Link>
+            <Link to="/characters"><ArrowLeft className="size-5" /></Link>
           </Button>
           <div className="flex-1 text-center">
             <div className="font-medium text-[15px] truncate">{character?.name ?? "加载中..."}</div>
