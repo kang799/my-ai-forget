@@ -1,8 +1,19 @@
-// Voice transcription via Lovable AI Gateway (Gemini multimodal)
+// Voice transcription via Lovable AI Gateway (Gemini multimodal, OpenAI-compatible)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function pickFormat(mime: string): string {
+  const m = mime.toLowerCase();
+  if (m.includes("webm")) return "webm";
+  if (m.includes("ogg")) return "ogg";
+  if (m.includes("mp4") || m.includes("m4a") || m.includes("aac")) return "mp4";
+  if (m.includes("wav")) return "wav";
+  if (m.includes("mpeg") || m.includes("mp3")) return "mp3";
+  if (m.includes("flac")) return "flac";
+  return "webm";
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -26,31 +37,42 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
     const audioMime = (typeof mime === "string" && mime) ? mime : "audio/webm";
-    const dataUrl = `data:${audioMime};base64,${audio}`;
+    const format = pickFormat(audioMime);
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: "你是一个中文语音转写助手。把用户提供的语音原样、准确地转写成中文文字。只输出转写结果文本，不要加任何解释、引号、标点说明或前后缀。如果完全听不清，输出空字符串。",
-          },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "请把这段语音转写成中文文字。" },
-              { type: "audio_url", audio_url: { url: dataUrl } },
-            ],
-          },
-        ],
-      }),
-    });
+    async function callGateway(model: string) {
+      return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: "system",
+              content:
+                "你是一个中文语音转写助手。把用户提供的语音原样、准确地转写成中文文字。只输出转写结果文本本身，不要任何解释、引号、前后缀或标注。如果完全听不清，输出空字符串。",
+            },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "请把这段语音转写成中文文字。" },
+                { type: "input_audio", input_audio: { data: audio, format } },
+              ],
+            },
+          ],
+        }),
+      });
+    }
+
+    let resp = await callGateway("google/gemini-2.5-flash");
+    if (!resp.ok && resp.status !== 429 && resp.status !== 402) {
+      const t = await resp.text();
+      console.error("transcribe primary model failed:", resp.status, t);
+      // Fallback to a stronger multimodal model
+      resp = await callGateway("google/gemini-2.5-pro");
+    }
 
     if (resp.status === 429 || resp.status === 402) {
       return new Response(JSON.stringify({ error: resp.status === 429 ? "请求过于频繁" : "AI 额度已用完" }), {
@@ -60,13 +82,14 @@ Deno.serve(async (req) => {
     if (!resp.ok) {
       const t = await resp.text();
       console.error("transcribe gateway error:", resp.status, t);
-      return new Response(JSON.stringify({ error: "转写服务暂时不可用" }), {
+      return new Response(JSON.stringify({ error: "转写服务暂时不可用", detail: t.slice(0, 500) }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await resp.json();
     const text = (data.choices?.[0]?.message?.content ?? "").toString().trim();
+    console.log("transcribe ok, len=", text.length, "format=", format);
     return new Response(JSON.stringify({ text }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
