@@ -66,42 +66,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Sanitize/limit messages, supporting voice (audio) attachments
-    const filtered = messages
+    // Sanitize/limit messages (text only — voice is transcribed before sending)
+    const safeMessages = messages
       .filter((m: any) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"))
-      .slice(-40);
-
-    const safeMessages = await Promise.all(
-      filtered.map(async (m: any) => {
-        const text = String(m.content).slice(0, 4000);
-        // Only attach audio for user messages with a usable url
-        if (m.role === "user" && typeof m.audio_url === "string" && m.audio_url.startsWith("http")) {
-          try {
-            const audioResp = await fetch(m.audio_url);
-            if (audioResp.ok) {
-              const buf = new Uint8Array(await audioResp.arrayBuffer());
-              // Cap at ~8MB to avoid huge payloads
-              if (buf.byteLength <= 8 * 1024 * 1024) {
-                let binary = "";
-                for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
-                const b64 = btoa(binary);
-                const mime = audioResp.headers.get("content-type") || "audio/webm";
-                return {
-                  role: "user",
-                  content: [
-                    { type: "text", text: "这是用户发来的一段语音消息，请仔细听完后用中文自然地回复（不要描述音频，也不要提到你在听音频，就像在微信里收到对方语音一样直接回复内容）。" },
-                    { type: "input_audio", input_audio: { data: b64, format: mime.includes("mp4") || mime.includes("m4a") ? "m4a" : mime.includes("ogg") ? "ogg" : mime.includes("wav") ? "wav" : "webm" } },
-                  ],
-                };
-              }
-            }
-          } catch (e) {
-            console.error("audio fetch failed", e);
-          }
-        }
-        return { role: m.role, content: text };
-      })
-    );
+      .slice(-40)
+      .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
