@@ -501,11 +501,21 @@ function HoldToTalk({
   );
 }
 
-function VoiceBubble({ url, ms, isUser }: { url: string; ms: number; isUser: boolean }) {
+function VoiceBubble({
+  msg, isUser, onDelete, onRecall, onTranscribe,
+}: {
+  msg: Msg; isUser: boolean;
+  onDelete: (m: Msg) => unknown;
+  onRecall: (m: Msg) => unknown;
+  onTranscribe: (m: Msg) => Promise<string>;
+}) {
+  const url = msg.audio_url!;
+  const ms = msg.duration_ms ?? 1000;
   const [playing, setPlaying] = useState(false);
+  const [showText, setShowText] = useState(!!msg.transcript);
+  const [loadingText, setLoadingText] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const seconds = Math.max(1, Math.round(ms / 1000));
-  // Width scales with duration (60s max), like WeChat
   const width = Math.min(220, 70 + seconds * 4);
 
   function toggle() {
@@ -522,32 +532,122 @@ function VoiceBubble({ url, ms, isUser }: { url: string; ms: number; isUser: boo
     }
   }
 
+  async function handleTranscribe() {
+    if (msg.transcript) { setShowText(true); return; }
+    setLoadingText(true);
+    try { await onTranscribe(msg); setShowText(true); }
+    finally { setLoadingText(false); }
+  }
+
+  const { bind, menu } = useLongPressMenu({
+    items: [
+      { label: showText ? "收起文字" : (loadingText ? "转写中…" : "转文字"), onClick: () => (showText ? setShowText(false) : handleTranscribe()) },
+      ...(isUser ? [{ label: "撤回", onClick: () => onRecall(msg) }] : []),
+      { label: "删除", danger: true, onClick: () => onDelete(msg) },
+    ],
+  });
+
   return (
-    <button
-      onClick={toggle}
-      style={{ width }}
-      className={
-        "px-3 py-2.5 text-[14.5px] flex items-center gap-3 select-none " +
-        (isUser ? "wechat-bubble-me mr-1 flex-row-reverse" : "wechat-bubble-them ml-1")
-      }
-    >
-      <span className="inline-flex items-end gap-0.5 h-4 text-foreground/70 w-5 justify-center">
-        {playing ? (
-          <>
-            <span className="voice-bar" />
-            <span className="voice-bar" />
-            <span className="voice-bar" />
-          </>
-        ) : isUser ? (
-          <Play className="size-4" />
-        ) : (
-          <Play className="size-4 -scale-x-100" />
-        )}
-      </span>
-      <span className="tabular-nums text-foreground/80">{seconds}″</span>
-    </button>
+    <div className={"relative flex flex-col gap-1 " + (isUser ? "items-end" : "items-start")}>
+      <button
+        type="button"
+        {...bind}
+        onClick={toggle}
+        style={{ width }}
+        className={
+          "px-3 py-2.5 text-[14.5px] flex items-center gap-3 select-none " +
+          (isUser ? "wechat-bubble-me mr-1 flex-row-reverse" : "wechat-bubble-them ml-1")
+        }
+      >
+        <span className="inline-flex items-end gap-0.5 h-4 text-foreground/70 w-5 justify-center">
+          {playing ? (
+            <>
+              <span className="voice-bar" />
+              <span className="voice-bar" />
+              <span className="voice-bar" />
+            </>
+          ) : isUser ? (
+            <Play className="size-4" />
+          ) : (
+            <Play className="size-4 -scale-x-100" />
+          )}
+        </span>
+        <span className="tabular-nums text-foreground/80">{seconds}″</span>
+      </button>
+      {showText && msg.transcript && (
+        <div className={
+          "px-3 py-1.5 rounded text-[13px] leading-relaxed max-w-[260px] bg-black/5 text-foreground/80 " +
+          (isUser ? "mr-1" : "ml-1")
+        }>
+          {msg.transcript}
+        </div>
+      )}
+      {menu}
+    </div>
   );
 }
+
+function useLongPressMenu({ items }: {
+  items: { label: string; onClick: () => void; danger?: boolean }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<number | null>(null);
+  const moved = useRef(false);
+  const startPos = useRef<{ x: number; y: number } | null>(null);
+
+  function clear() {
+    if (timer.current) { window.clearTimeout(timer.current); timer.current = null; }
+  }
+
+  const bind = {
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 2) return;
+      moved.current = false;
+      startPos.current = { x: e.clientX, y: e.clientY };
+      clear();
+      timer.current = window.setTimeout(() => { setOpen(true); }, 450);
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (!startPos.current) return;
+      const dx = Math.abs(e.clientX - startPos.current.x);
+      const dy = Math.abs(e.clientY - startPos.current.y);
+      if (dx > 8 || dy > 8) { moved.current = true; clear(); }
+    },
+    onPointerUp: () => { clear(); },
+    onPointerCancel: () => { clear(); },
+    onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); setOpen(true); },
+    onClickCapture: (e: React.MouseEvent) => {
+      if (open) { e.stopPropagation(); e.preventDefault(); setOpen(false); }
+    },
+  };
+
+  const menu = open ? (
+    <>
+      <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} onContextMenu={(e) => { e.preventDefault(); setOpen(false); }} />
+      <div className="absolute z-50 -top-2 left-1/2 -translate-x-1/2 -translate-y-full">
+        <div className="bg-[#4c4c4c] text-white rounded-md shadow-lg overflow-hidden flex text-[13px]">
+          {items.map((it, idx) => (
+            <button
+              key={idx}
+              onClick={(e) => { e.stopPropagation(); setOpen(false); it.onClick(); }}
+              className={
+                "px-3.5 py-2 hover:bg-white/10 whitespace-nowrap " +
+                (idx > 0 ? "border-l border-white/10 " : "") +
+                (it.danger ? "text-red-300" : "")
+              }
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+        <div className="w-2 h-2 bg-[#4c4c4c] rotate-45 mx-auto -mt-1" />
+      </div>
+    </>
+  ) : null;
+
+  return { bind, menu };
+}
+
 
 function Bubble({
   msg, character, shake, onNudge, partnerAvatar, onDelete, onRecall, onTranscribe,
