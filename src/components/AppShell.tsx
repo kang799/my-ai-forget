@@ -82,6 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      )}
       <main className="flex-1">{children}</main>
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
