@@ -12,6 +12,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const [loginOpen, setLoginOpen] = useState(false);
+  // 进入具体对话页时隐藏顶部导航栏，模拟微信聊天界面
+  const hideHeader = /^\/chat\/[^/]+/.test(path);
 
   const nav = [
     { to: "/characters", label: "角色", icon: Users },
@@ -22,6 +24,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {!hideHeader && (
       <header className="sticky top-0 z-30 glass border-b">
         <div className="max-w-6xl mx-auto h-14 px-4 flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
@@ -79,6 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      )}
       <main className="flex-1">{children}</main>
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
