@@ -530,7 +530,7 @@ function VoiceBubble({
   const url = msg.audio_url!;
   const ms = msg.duration_ms ?? 1000;
   const [playing, setPlaying] = useState(false);
-  const [showText, setShowText] = useState(!!msg.transcript);
+  const [showText, setShowText] = useState(false);
   const [loadingText, setLoadingText] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const seconds = Math.max(1, Math.round(ms / 1000));
