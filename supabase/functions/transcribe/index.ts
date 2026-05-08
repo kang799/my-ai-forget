@@ -1,4 +1,6 @@
 // Voice transcription via Lovable AI Gateway (Gemini multimodal, OpenAI-compatible)
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,6 +23,19 @@ Deno.serve(async (req) => {
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Cryptographically verify the JWT
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: auth } },
+    });
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -70,7 +85,6 @@ Deno.serve(async (req) => {
     if (!resp.ok && resp.status !== 429 && resp.status !== 402) {
       const t = await resp.text();
       console.error("transcribe primary model failed:", resp.status, t);
-      // Fallback to a stronger multimodal model
       resp = await callGateway("google/gemini-2.5-pro");
     }
 
@@ -82,7 +96,7 @@ Deno.serve(async (req) => {
     if (!resp.ok) {
       const t = await resp.text();
       console.error("transcribe gateway error:", resp.status, t);
-      return new Response(JSON.stringify({ error: "转写服务暂时不可用", detail: t.slice(0, 500) }), {
+      return new Response(JSON.stringify({ error: "转写服务暂时不可用" }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
