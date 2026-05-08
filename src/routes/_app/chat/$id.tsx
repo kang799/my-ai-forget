@@ -609,6 +609,7 @@ function useLongPressMenu({ items }: {
   items: { label: string; onClick: () => void; danger?: boolean }[];
 }) {
   const [open, setOpen] = useState(false);
+  const openedAt = useRef(0);
   const timer = useRef<number | null>(null);
   const moved = useRef(false);
   const startPos = useRef<{ x: number; y: number } | null>(null);
@@ -619,6 +620,12 @@ function useLongPressMenu({ items }: {
 
   const longPressFired = useRef(false);
 
+  function openMenu() {
+    longPressFired.current = true;
+    openedAt.current = Date.now();
+    setOpen(true);
+  }
+
   const bind = {
     onPointerDown: (e: React.PointerEvent) => {
       if (e.pointerType === "mouse" && e.button !== 0 && e.button !== 2) return;
@@ -626,10 +633,7 @@ function useLongPressMenu({ items }: {
       longPressFired.current = false;
       startPos.current = { x: e.clientX, y: e.clientY };
       clear();
-      timer.current = window.setTimeout(() => {
-        longPressFired.current = true;
-        setOpen(true);
-      }, 450);
+      timer.current = window.setTimeout(openMenu, 450);
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (!startPos.current) return;
@@ -639,20 +643,31 @@ function useLongPressMenu({ items }: {
     },
     onPointerUp: () => { clear(); },
     onPointerCancel: () => { clear(); },
-    onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); setOpen(true); },
+    onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); openMenu(); },
     onClickCapture: (e: React.MouseEvent) => {
-      // Suppress the synthetic click that follows a long-press, but DO NOT close the menu.
       if (longPressFired.current) {
         e.stopPropagation();
         e.preventDefault();
-        longPressFired.current = false;
       }
     },
+    style: { touchAction: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties,
   };
+
+  function tryClose() {
+    // Ignore the synthetic click that immediately follows the long-press release.
+    if (Date.now() - openedAt.current < 350) return;
+    setOpen(false);
+    longPressFired.current = false;
+  }
 
   const menu = open ? (
     <>
-      <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} onContextMenu={(e) => { e.preventDefault(); setOpen(false); }} />
+      <div
+        className="fixed inset-0 z-40"
+        onPointerDown={tryClose}
+        onClick={tryClose}
+        onContextMenu={(e) => { e.preventDefault(); tryClose(); }}
+      />
       <div className="absolute z-50 -top-2 left-1/2 -translate-x-1/2 -translate-y-full">
         <div className="bg-[#4c4c4c] text-white rounded-md shadow-lg overflow-hidden flex text-[13px]">
           {items.map((it, idx) => (
