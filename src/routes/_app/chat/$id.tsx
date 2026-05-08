@@ -550,13 +550,16 @@ function VoiceBubble({ url, ms, isUser }: { url: string; ms: number; isUser: boo
 }
 
 function Bubble({
-  msg, character, shake, onNudge, partnerAvatar,
+  msg, character, shake, onNudge, partnerAvatar, onDelete, onRecall, onTranscribe,
 }: {
   msg: Msg;
   character: Character | null;
   shake: "me" | "them" | null;
   onNudge: (t: "me" | "them") => void;
   partnerAvatar: React.ReactNode;
+  onDelete: (msg: Msg) => void | Promise<void>;
+  onRecall: (msg: Msg) => void | Promise<void>;
+  onTranscribe: (msg: Msg) => Promise<string>;
 }) {
   const isUser = msg.role === "user";
 
@@ -579,17 +582,46 @@ function Bubble({
     <div className={"flex gap-2 items-start " + (isUser ? "flex-row-reverse" : "")}>
       {isUser ? meAvatar : partnerAvatar}
       {msg.audio_url ? (
-        <VoiceBubble url={msg.audio_url} ms={msg.duration_ms ?? 1000} isUser={isUser} />
+        <VoiceBubble
+          msg={msg}
+          isUser={isUser}
+          onDelete={onDelete}
+          onRecall={onRecall}
+          onTranscribe={onTranscribe}
+        />
       ) : (
-        <div
-          className={
-            "px-3 py-2 text-[14.5px] leading-relaxed whitespace-pre-wrap max-w-[72%] " +
-            (isUser ? "wechat-bubble-me mr-1" : "wechat-bubble-them ml-1")
-          }
-        >
-          {msg.content}
-        </div>
+        <TextBubble msg={msg} isUser={isUser} onDelete={onDelete} onRecall={onRecall} />
       )}
     </div>
   );
 }
+
+function TextBubble({
+  msg, isUser, onDelete, onRecall,
+}: {
+  msg: Msg; isUser: boolean;
+  onDelete: (m: Msg) => void | Promise<void>;
+  onRecall: (m: Msg) => void | Promise<void>;
+}) {
+  const { bind, menu } = useLongPressMenu({
+    items: [
+      ...(isUser ? [{ label: "撤回", onClick: () => onRecall(msg) }] : []),
+      { label: "删除", danger: true, onClick: () => onDelete(msg) },
+    ],
+  });
+  return (
+    <div className="relative">
+      <div
+        {...bind}
+        className={
+          "px-3 py-2 text-[14.5px] leading-relaxed whitespace-pre-wrap max-w-[72%] cursor-default " +
+          (isUser ? "wechat-bubble-me mr-1" : "wechat-bubble-them ml-1")
+        }
+      >
+        {msg.content}
+      </div>
+      {menu}
+    </div>
+  );
+}
+
