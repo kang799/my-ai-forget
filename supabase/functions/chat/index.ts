@@ -52,11 +52,11 @@ Deno.serve(async (req) => {
     }
 
     // === Load character server-side, scoped to user (RLS) ===
+    // RLS allows owner or admin to read; don't double-filter by user_id
     const { data: character, error: charErr } = await supabase
       .from("characters")
       .select("*")
       .eq("id", character_id)
-      .eq("user_id", userId)
       .maybeSingle();
 
     if (charErr || !character) {
